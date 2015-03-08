@@ -22,6 +22,31 @@ namespace DatabaseUpgrader
             m_UpgradeFiles = Directory.GetFiles(scriptsPath, "*.sql");
         }
 
+        public bool Initialize()
+        {
+            using (var connection = new SqlConnection(m_ConnectionString))
+            {
+                connection.Open();
+                using (SqlCommand command = connection.CreateCommand())
+                {
+                    command.CommandText =
+                        "CREATE TABLE [dbo].[Version]( " +
+                        "[Id] [bigint] NOT NULL, " +
+                        "[DatabaseVersion] [int] NOT NULL, " +
+                        "[SoftwareVersion] [nvarchar](25) NOT NULL, " +
+                        "[ReleaseDate] [datetime] NOT NULL " +
+                        "CONSTRAINT [PK_Version] PRIMARY KEY CLUSTERED " +
+                        "( " +
+                        "[Id] ASC " +
+                        ")WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]" +
+                        ") ON [PRIMARY]";
+                    int rowCount = command.ExecuteNonQuery();
+                    Log.InfoFormat("Execute table creation affected {0} rows", rowCount);
+                    return rowCount == 1;
+                }
+            }
+        }
+
         public bool RequiresUpgrade()
         {
             SchemaVersion currentSchemaVersion = RetrieveCurrentVersionFromDatabase(m_ConnectionString);
@@ -46,7 +71,8 @@ namespace DatabaseUpgrader
             var orderedScriptsToExecute = OrderScriptsToUpgradeDatabase(currentSchemaVersion, m_UpgradeFiles);
             if (orderedScriptsToExecute.Length == 0)
             {
-                Log.InfoFormat("The database version {0} is current so no upgrade is needed.", currentSchemaVersion.DatabaseVersion);
+                Log.InfoFormat("The database version {0} is current so no upgrade is needed.",
+                    currentSchemaVersion.DatabaseVersion);
                 return true;
             }
             bool result = UpdateScripts(orderedScriptsToExecute);
@@ -114,7 +140,8 @@ namespace DatabaseUpgrader
         }
 
 
-        public static string[] OrderScriptsToUpgradeDatabase(SchemaVersion currentSchemaVersion, IEnumerable<string> upgradeFiles)
+        public static string[] OrderScriptsToUpgradeDatabase(SchemaVersion currentSchemaVersion,
+            IEnumerable<string> upgradeFiles)
         {
             var scriptsToProcess = new List<string>();
             foreach (var file in upgradeFiles)

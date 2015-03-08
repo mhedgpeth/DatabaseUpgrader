@@ -9,6 +9,13 @@ This process can be used standalone or with chef. Create a scripts folder in you
 When the program runs, it checks the Version table for the latest version that is in the table. It then checks if any files are greater than that version, and runs those sql files if out of date.
 
 # Usage
+## Create the Version Table for Schema Version Tracking
+If you have a fresh database, use this to add a version table which will get you started
+
+```
+DatabaseUpgrader.exe --initialize "-cServer=myServerAddress;Database=myDataBase;User Id=myUsername;Password=myPassword"
+```
+
 ## Check if a Database Upgrade is Needed
 This will be useful for a not-if condition in chef:
 

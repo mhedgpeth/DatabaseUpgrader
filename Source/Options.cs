@@ -26,8 +26,12 @@ namespace DatabaseUpgrader
             HelpText = "the software version to add to the version table if upgrading the database")]
         public string SoftwareVersion { get; [UsedImplicitly] set; }
 
-        [Option('d', "schemaDirectory", Required = true,
+        [Option('d', "schemaDirectory", Required = false,
             HelpText = "the directory that contains the numbered schema index files")]
         public string SchemaDirectory { get; [UsedImplicitly] set; }
+
+        [Option('i', "initialize", Required = false, DefaultValue = false,
+            HelpText = "that you want to initialize the database")]
+        public bool Initialize { get; set; }
     }
 }
