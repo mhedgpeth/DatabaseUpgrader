@@ -13,7 +13,7 @@ namespace SqlSchemaMannager
             var result = Parser.Default.ParseArguments(args, options);
             if (result)
             {
-                var upgrader = new DatabaseUpgrader(options.ConnectionString, options.SoftwareVersion, options.SchemaDirectory);
+                var upgrader = new DatabaseUpgrader.DatabaseUpgrader(options.ConnectionString, options.SoftwareVersion, options.SchemaDirectory);
                 if (options.CheckIfUpgradeRequired)
                 {
                     Log.Info("Checking if an upgrade is even needed");

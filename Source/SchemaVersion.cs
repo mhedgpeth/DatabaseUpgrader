@@ -1,6 +1,6 @@
 using System;
 
-namespace SqlSchemaMannager
+namespace DatabaseUpgrader
 {
     public class SchemaVersion
     {

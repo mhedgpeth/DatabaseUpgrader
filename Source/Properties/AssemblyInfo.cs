@@ -1,16 +1,17 @@
 ﻿using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("SqlSchemaMannager")]
-[assembly: AssemblyDescription("")]
+using log4net.Config;
+
+[assembly: AssemblyTitle("DatabaseUpgrader")]
+[assembly: AssemblyDescription("upgrades a database")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("NCR Corporation")]
-[assembly: AssemblyProduct("SqlSchemaMannager")]
-[assembly: AssemblyCopyright("Copyright © NCR Corporation 2015")]
+[assembly: AssemblyCompany("Michael Hedgpeth")]
+[assembly: AssemblyProduct("Database Upgrader")]
+[assembly: AssemblyCopyright("")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -33,4 +34,4 @@ using System.Runtime.InteropServices;
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: XmlConfigurator(ConfigFileExtension = "log4net", Watch = true)]

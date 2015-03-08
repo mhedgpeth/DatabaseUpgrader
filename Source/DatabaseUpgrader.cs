@@ -6,7 +6,7 @@ using System.Linq;
 using log4net;
 using Microsoft.SqlServer.Management.Common;
 
-namespace SqlSchemaMannager
+namespace DatabaseUpgrader
 {
     public class DatabaseUpgrader
     {

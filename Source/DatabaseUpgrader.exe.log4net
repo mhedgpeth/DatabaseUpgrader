@@ -29,7 +29,7 @@
     </layout>
   </appender>
 	<appender name="FileAppender" type="log4net.Appender.RollingFileAppender">
-		<file value="log/SqlSchemaManager.log" />
+		<file value="log/DatabaseUpgrader.log" />
     <appendToFile value="true" />
     <rollingStyle value="Size" />
     <maxSizeRollBackups value="7" />
