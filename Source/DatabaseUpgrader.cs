@@ -30,9 +30,7 @@ namespace DatabaseUpgrader
                 Log.Error("You must have a version defined in the upgrade table to continue");
                 return false;
             }
-            int destination = HighestFileNumberPast(currentSchemaVersion);
-            Log.InfoFormat("The database is currently at {0} and the highest schema available is {1}");
-            bool requiresUpgrade = currentSchemaVersion.DatabaseVersion < destination;
+            bool requiresUpgrade = OrderScriptsToUpgradeDatabase(currentSchemaVersion, m_UpgradeFiles).Length > 0;
             Log.InfoFormat("This database does{0} require upgrade", requiresUpgrade ? string.Empty : " not");
             return requiresUpgrade;
         }
@@ -45,17 +43,16 @@ namespace DatabaseUpgrader
                 Log.Error("You must have a version defined in the upgrade table to continue");
                 return false;
             }
-            int destination = HighestFileNumberPast(currentSchemaVersion);
-            if (currentSchemaVersion.DatabaseVersion == destination)
+            var orderedScriptsToExecute = OrderScriptsToUpgradeDatabase(currentSchemaVersion, m_UpgradeFiles);
+            if (orderedScriptsToExecute.Length == 0)
             {
-                Log.InfoFormat("The database version {0} is current so no upgrade is needed.", destination);
+                Log.InfoFormat("The database version {0} is current so no upgrade is needed.", currentSchemaVersion.DatabaseVersion);
                 return true;
             }
-            var orderedScriptsToExecute = OrderScriptsToUpgradeDatabase(currentSchemaVersion, destination);
             bool result = UpdateScripts(orderedScriptsToExecute);
             if (result)
             {
-                result = AddUpdatedVersionToDatabase(destination);
+                result = AddUpdatedVersionToDatabase(DatabaseVersionFor(orderedScriptsToExecute.LastOrDefault()));
             }
             return result;
         }
@@ -117,44 +114,23 @@ namespace DatabaseUpgrader
         }
 
 
-        private IEnumerable<string> OrderScriptsToUpgradeDatabase(SchemaVersion currentSchemaVersion, int destination)
+        public static string[] OrderScriptsToUpgradeDatabase(SchemaVersion currentSchemaVersion, IEnumerable<string> upgradeFiles)
         {
             var scriptsToProcess = new List<string>();
-            foreach (var file in m_UpgradeFiles)
+            foreach (var file in upgradeFiles)
             {
                 int scriptVersion = DatabaseVersionFor(file);
                 if (scriptVersion > currentSchemaVersion.DatabaseVersion)
                 {
                     Log.InfoFormat("Processing item {0} because it should be processed after {1}", file,
-                        destination);
+                        currentSchemaVersion.DatabaseVersion);
                     scriptsToProcess.Add(file);
                 }
             }
-            return scriptsToProcess.OrderBy(DatabaseVersionFor);
+            return scriptsToProcess.OrderBy(DatabaseVersionFor).ToArray();
         }
 
-        private int HighestFileNumberPast(SchemaVersion schemaVersion)
-        {
-            int highestVersion = schemaVersion.DatabaseVersion;
-            foreach (var file in m_UpgradeFiles)
-            {
-                int numericPart = DatabaseVersionFor(file);
-                if (numericPart > highestVersion)
-                {
-                    Log.DebugFormat("File {0} exists as an upgrade to existing version {1}",
-                        file, schemaVersion.DatabaseVersion);
-                    highestVersion = numericPart;
-                }
-                else
-                {
-                    Log.DebugFormat("File {0} has already been processed against this version because it is before {1} (is version {2}",
-                        file, schemaVersion.DatabaseVersion, numericPart);
-                }
-            }
-            return highestVersion;
-        }
-
-        private int DatabaseVersionFor(string file)
+        public static int DatabaseVersionFor(string file)
         {
             int numericPart = 0;
             string fileName = file.Substring(file.IndexOf('/') + 1);

@@ -1,7 +1,7 @@
 ﻿using CommandLine;
 using log4net;
 
-namespace SqlSchemaMannager
+namespace DatabaseUpgrader
 {
     internal class Program
     {
@@ -9,27 +9,21 @@ namespace SqlSchemaMannager
 
         private static int Main(string[] args)
         {
-            var options = new Options();
-            var result = Parser.Default.ParseArguments(args, options);
-            if (result)
+            var options = Options.Parse(args);
+            
+            if (options != null)
             {
-                var upgrader = new DatabaseUpgrader.DatabaseUpgrader(options.ConnectionString, options.SoftwareVersion, options.SchemaDirectory);
+                var upgrader = new DatabaseUpgrader(options.ConnectionString, options.SoftwareVersion, options.SchemaDirectory);
                 if (options.CheckIfUpgradeRequired)
                 {
                     Log.Info("Checking if an upgrade is even needed");
-                    result = upgrader.RequiresUpgrade();
+                    return upgrader.RequiresUpgrade() ? 0 : -1;
                 }
-                else
-                {
-                    Log.Info("Checking if an upgrade is needed, and if so, performing the upgrade");
-                    result = upgrader.UpgradeSchema();
-                }
+                Log.Info("Checking if an upgrade is needed, and if so, performing the upgrade");
+                return upgrader.UpgradeSchema() ? 0 : -2;
             }
-            else
-            {
-                Log.ErrorFormat("Could not parse arguments. Check the help text");
-            }
-            return result ? 0 : -1;
+            Log.ErrorFormat("Could not parse arguments. Check the help text");
+            return -3;
         }
     }
 }

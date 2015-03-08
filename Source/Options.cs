@@ -1,10 +1,17 @@
 ﻿using CommandLine;
-using SqlSchemaMannager.Annotations;
+using DatabaseUpgrader.Annotations;
 
-namespace SqlSchemaMannager
+namespace DatabaseUpgrader
 {
     public class Options
     {
+        public static Options Parse(params string[] args)
+        {
+            var options = new Options();
+            var result = Parser.Default.ParseArguments(args, options);
+            return result ? options : null;
+        }
+
         [Option(DefaultValue = false,
             HelpText =
                 "If declared, will only check that an upgrade is required and skip the actual upgrade. This is for only-if situations"
