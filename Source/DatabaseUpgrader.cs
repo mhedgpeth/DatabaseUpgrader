@@ -19,7 +19,10 @@ namespace DatabaseUpgrader
         {
             m_ConnectionString = connectionString;
             m_SoftwareVersion = softwareVersion;
-            m_UpgradeFiles = Directory.GetFiles(scriptsPath, "*.sql");
+            m_UpgradeFiles = !string.IsNullOrEmpty(scriptsPath)
+                ? Directory.GetFiles(scriptsPath, "*.sql")
+                : new string[0];
+            Log.DebugFormat("Created for version {0} going to scripts path {1}", softwareVersion, scriptsPath);
         }
 
         public bool Initialize()
@@ -31,7 +34,7 @@ namespace DatabaseUpgrader
                 {
                     command.CommandText =
                         "CREATE TABLE [dbo].[Version]( " +
-                        "[Id] [bigint] NOT NULL, " +
+                        "[Id] int IDENTITY(1, 1), " +
                         "[DatabaseVersion] [int] NOT NULL, " +
                         "[SoftwareVersion] [nvarchar](25) NOT NULL, " +
                         "[ReleaseDate] [datetime] NOT NULL " +
@@ -40,9 +43,15 @@ namespace DatabaseUpgrader
                         "[Id] ASC " +
                         ")WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]" +
                         ") ON [PRIMARY]";
-                    int rowCount = command.ExecuteNonQuery();
-                    Log.InfoFormat("Execute table creation affected {0} rows", rowCount);
-                    return rowCount == 1;
+                    command.ExecuteNonQuery();
+                    Log.Info("Adding initial version to the database");
+                    return AddToDatabase(new SchemaVersion()
+                    {
+                        Id = 0,
+                        DatabaseVersion = 0,
+                        SoftwareVersion = "0.0.0.0",
+                        ReleaseDate = DateTime.Now
+                    });
                 }
             }
         }
@@ -52,8 +61,8 @@ namespace DatabaseUpgrader
             SchemaVersion currentSchemaVersion = RetrieveCurrentVersionFromDatabase(m_ConnectionString);
             if (currentSchemaVersion == null)
             {
-                Log.Error("You must have a version defined in the upgrade table to continue");
-                return false;
+                Log.Warn("This database has never been upgraded, so an upgrade is reuired");
+                return true;
             }
             bool requiresUpgrade = OrderScriptsToUpgradeDatabase(currentSchemaVersion, m_UpgradeFiles).Length > 0;
             Log.InfoFormat("This database does{0} require upgrade", requiresUpgrade ? string.Empty : " not");
@@ -65,8 +74,8 @@ namespace DatabaseUpgrader
             SchemaVersion currentSchemaVersion = RetrieveCurrentVersionFromDatabase(m_ConnectionString);
             if (currentSchemaVersion == null)
             {
-                Log.Error("You must have a version defined in the upgrade table to continue");
-                return false;
+                Log.Warn("This database has never been upgraded, so starting from the beginning");
+                currentSchemaVersion = new SchemaVersion {DatabaseVersion = 0, Id = 0};
             }
             var orderedScriptsToExecute = OrderScriptsToUpgradeDatabase(currentSchemaVersion, m_UpgradeFiles);
             if (orderedScriptsToExecute.Length == 0)
@@ -127,8 +136,8 @@ namespace DatabaseUpgrader
                 using (SqlCommand command = connection.CreateCommand())
                 {
                     command.CommandText =
-                        "insert into Version (Id, DatabaseVersion, SoftwareVersion, ReleaseDate) "
-                        + "VALUES ((SELECT MAX(Id) + 1 FROM Version), @DatabaseVersion, @SoftwareVersion, @ReleaseDate)";
+                        "insert into Version (DatabaseVersion, SoftwareVersion, ReleaseDate) "
+                        + "VALUES (@DatabaseVersion, @SoftwareVersion, @ReleaseDate)";
                     command.Parameters.AddWithValue("DatabaseVersion", schemaVersion.DatabaseVersion);
                     command.Parameters.AddWithValue("ReleaseDate", schemaVersion.ReleaseDate);
                     command.Parameters.AddWithValue("SoftwareVersion", schemaVersion.SoftwareVersion);
@@ -147,11 +156,18 @@ namespace DatabaseUpgrader
             foreach (var file in upgradeFiles)
             {
                 int scriptVersion = DatabaseVersionFor(file);
+                Log.InfoFormat(
+                    "Checking if file {0} with version {1} should be in the upgrade when the current version is {2}",
+                    file, scriptVersion, currentSchemaVersion.DatabaseVersion);
                 if (scriptVersion > currentSchemaVersion.DatabaseVersion)
                 {
                     Log.InfoFormat("Processing item {0} because it should be processed after {1}", file,
                         currentSchemaVersion.DatabaseVersion);
                     scriptsToProcess.Add(file);
+                }
+                else
+                {
+                    Log.InfoFormat("File {0} has already been upgraded so it will be skipped", file);
                 }
             }
             return scriptsToProcess.OrderBy(DatabaseVersionFor).ToArray();
@@ -160,7 +176,7 @@ namespace DatabaseUpgrader
         public static int DatabaseVersionFor(string file)
         {
             int numericPart = 0;
-            string fileName = file.Substring(file.IndexOf('/') + 1);
+            string fileName = file.Substring(file.IndexOf('\\') + 1);
             if (fileName.EndsWith(".sql"))
             {
                 string numericPartString = fileName.Substring(0, fileName.Length - 4);
@@ -186,7 +202,7 @@ namespace DatabaseUpgrader
                         {
                             currentSchemaVersion = new SchemaVersion
                             {
-                                Id = reader.GetInt64(0),
+                                Id = reader.GetInt32(0),
                                 DatabaseVersion = reader.GetInt32(1),
                                 SoftwareVersion = reader.GetString(2),
                                 ReleaseDate = reader.GetDateTime(3)

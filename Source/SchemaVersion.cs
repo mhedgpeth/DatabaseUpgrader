@@ -4,7 +4,7 @@ namespace DatabaseUpgrader
 {
     public class SchemaVersion
     {
-        public long Id { get; set; }
+        public int Id { get; set; }
         public int DatabaseVersion { get; set; }
         public string SoftwareVersion { get; set; }
         public DateTime ReleaseDate { get; set; }

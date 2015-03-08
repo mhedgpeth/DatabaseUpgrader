@@ -9,11 +9,21 @@ namespace DatabaseUpgrader
 
         private static int Main(string[] args)
         {
+            Log.InfoFormat("Database Upgrader");
+            Log.Info("Arguments:");
+            for (int i = 0; i < args.Length; i++)
+            {
+                Log.InfoFormat("{0}: {1}", i + 1, args[i]);
+            }
             var options = Options.Parse(args);
             
             if (options != null)
             {
                 var upgrader = new DatabaseUpgrader(options.ConnectionString, options.SoftwareVersion, options.SchemaDirectory);
+                if (options.Initialize)
+                {
+                    return upgrader.Initialize() ? 0 : -4;
+                }
                 if (options.CheckIfUpgradeRequired)
                 {
                     Log.Info("Checking if an upgrade is even needed");

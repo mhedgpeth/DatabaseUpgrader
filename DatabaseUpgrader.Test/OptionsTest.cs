@@ -7,7 +7,7 @@ namespace DatabaseUpgrader.Test
     {
         const string Directory = ".";
         const string ConnectionString = "Server=myServerAddress;Database=myDataBase;User Id=myUsername;Password=myPassword";
-        private const string Version = "1.2.3.4";
+        private const string Version = "1.0.0.0";
         [Test]
         public void Parse_ShouldParseCheckIfUpgradeRequired()
         {
@@ -29,8 +29,7 @@ namespace DatabaseUpgrader.Test
         [Test]
         public void Parse_ShouldParseUpgrade()
         {
-            var options = Options.Parse(CreateConnectionStringArgument(), string.Format("-d{0}", Directory),
-                "-v" + Version);
+            var options = Options.Parse(string.Format("-v{0}", Version), CreateConnectionStringArgument(), string.Format("-d{0}", Directory));
 
             AssertOptions(options, false, Version);
         }

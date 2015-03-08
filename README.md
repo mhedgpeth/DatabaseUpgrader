@@ -29,7 +29,7 @@ Note the quotes so you can have a space in the connection string. Also, the scri
 This will perform the upgrade, or do nothing if the schema is up to date.
 
 ```
-DatabaseUpgrader.exe "-cServer=myServerAddress;Database=myDataBase;User Id=myUsername;Password=myPassword" -dscripts -v1.2.3.4
+DatabaseUpgrader.exe "-cServer=myServerAddress;Database=myDataBase;User Id=myUsername;Password=myPassword" -dscripts "-v1.2.3.4"
 ```
 
-The upgrader will insert the version of the software into the version table, so you have a good history of what has been done on the database.
+The upgrader will insert the version of the software into the version table, so you have a good history of what has been done on the database. Also notice that the version is in quotes, or else the executable can't handle the argument.

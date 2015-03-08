@@ -9,11 +9,13 @@ namespace DatabaseUpgrader.Test
         [TestCase("1.sql", 1)]
         [TestCase("25.sql", 25)]
         [TestCase("something.sql", 0)]
+        [TestCase("scripts\\1.sql", 1)]
         [Test]
         public void DatabaseVersionFor_ShouldParse(string file, int expected)
         {
             Assert.That(DatabaseUpgrader.DatabaseVersionFor(file), Is.EqualTo(expected));
         }
+
         private static readonly string[] UpgradeFiles = { "something.sql", "3.sql", "2.sql", "1.sql" };
 
        
