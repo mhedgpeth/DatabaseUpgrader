@@ -51,8 +51,8 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Source\DatabaseUpgrader.csproj">
-      <Project>{F6DD288D-8D93-49A3-8B79-02B40C46665E}</Project>
+    <ProjectReference Include="..\DatabaseUpgrader\DatabaseUpgrader.csproj">
+      <Project>{f6dd288d-8d93-49a3-8b79-02b40c46665e}</Project>
       <Name>DatabaseUpgrader</Name>
     </ProjectReference>
   </ItemGroup>

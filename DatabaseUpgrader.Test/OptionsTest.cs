@@ -11,7 +11,7 @@ namespace DatabaseUpgrader.Test
         [Test]
         public void Parse_ShouldParseCheckIfUpgradeRequired()
         {
-            var options = Options.Parse("--checkIfUpgradeRequired", CreateConnectionStringArgument(), string.Format("-d{0}", Directory));
+            var options = Options.Parse("--requiresUpgrade", CreateConnectionStringArgument(), string.Format("-d{0}", Directory));
 
             AssertOptions(options);
         }
