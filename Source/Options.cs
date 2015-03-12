@@ -16,7 +16,7 @@ namespace DatabaseUpgrader
             HelpText =
                 "If declared, will only check that an upgrade is required and skip the actual upgrade. This is for only-if situations"
             )]
-        public bool CheckIfUpgradeRequired { get; [UsedImplicitly] set; }
+        public bool RequiresUpgrade { get; [UsedImplicitly] set; }
 
         [Option('c', "connectionString", Required = true,
             HelpText = "the connection string that connects to the database")]
@@ -29,6 +29,9 @@ namespace DatabaseUpgrader
         [Option('d', "schemaDirectory", Required = false,
             HelpText = "the directory that contains the numbered schema index files")]
         public string SchemaDirectory { get; [UsedImplicitly] set; }
+
+        [Option(DefaultValue = false, Required = false, HelpText = "that we should check if this requires initialization")]
+        public bool RequiresInitialize { get; [UsedImplicitly] set; }
 
         [Option('i', "initialize", Required = false, DefaultValue = false,
             HelpText = "that you want to initialize the database")]

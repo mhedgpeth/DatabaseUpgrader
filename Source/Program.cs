@@ -1,4 +1,5 @@
-﻿using CommandLine;
+﻿using System.Reflection;
+using CommandLine;
 using log4net;
 
 namespace DatabaseUpgrader
@@ -9,7 +10,7 @@ namespace DatabaseUpgrader
 
         private static int Main(string[] args)
         {
-            Log.InfoFormat("Database Upgrader");
+            Log.InfoFormat("Database Upgrader version {0}", Assembly.GetCallingAssembly().GetName().Version);
             Log.Info("Arguments:");
             for (int i = 0; i < args.Length; i++)
             {
@@ -20,20 +21,32 @@ namespace DatabaseUpgrader
             if (options != null)
             {
                 var upgrader = new DatabaseUpgrader(options.ConnectionString, options.SoftwareVersion, options.SchemaDirectory);
+                if (options.RequiresInitialize)
+                {
+                    return ConvertTo(upgrader.RequiresInitialize(), -5, "Requires Initialize");
+                }
                 if (options.Initialize)
                 {
-                    return upgrader.Initialize() ? 0 : -4;
+                    return ConvertTo(upgrader.Initialize(), -4, "Initialize");
                 }
-                if (options.CheckIfUpgradeRequired)
+                if (options.RequiresUpgrade)
                 {
                     Log.Info("Checking if an upgrade is even needed");
-                    return upgrader.RequiresUpgrade() ? 0 : -1;
+                    return ConvertTo(upgrader.RequiresUpgrade(), -1, "Check if Upgrade Required");
                 }
                 Log.Info("Checking if an upgrade is needed, and if so, performing the upgrade");
-                return upgrader.UpgradeSchema() ? 0 : -2;
+                return ConvertTo(upgrader.UpgradeSchema(), -2, "Upgrade Schema");
             }
             Log.ErrorFormat("Could not parse arguments. Check the help text");
-            return -3;
+            return ConvertTo(false, -3, "Argument Parsing");
+        }
+
+        private static int ConvertTo(bool functionResult, int failureReturnValue, string description)
+        {
+            var returnValue = functionResult ? 0 : failureReturnValue;
+            Log.InfoFormat("Result of {0} is {1} so return value will be {2}",
+                description, functionResult ? "passed" : "failed", returnValue);
+            return returnValue;
         }
     }
 }

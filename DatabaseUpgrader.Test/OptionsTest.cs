@@ -19,11 +19,12 @@ namespace DatabaseUpgrader.Test
         private static void AssertOptions(Options options, bool expectedCheckIfUpgradeRequired = true, string expectedVersion = null, bool expectedInitialize = false, string expectedDirectory = Directory)
         {
             Assert.That(options, Is.Not.Null);
-            Assert.That(options.CheckIfUpgradeRequired, Is.EqualTo(expectedCheckIfUpgradeRequired));
+            Assert.That(options.RequiresUpgrade, Is.EqualTo(expectedCheckIfUpgradeRequired));
             Assert.That(options.ConnectionString, Is.EqualTo(ConnectionString));
             Assert.That(options.SchemaDirectory, Is.EqualTo(expectedDirectory));
             Assert.That(options.SoftwareVersion, Is.EqualTo(expectedVersion));
             Assert.That(options.Initialize, Is.EqualTo(expectedInitialize));
+            Assert.That(options.RequiresInitialize, Is.False);
         }
 
         [Test]
@@ -39,7 +40,6 @@ namespace DatabaseUpgrader.Test
             return string.Format("-c{0}", ConnectionString);
         }
 
-
         [Test]
         public void Parse_ShouldParseInitialize()
         {
@@ -47,5 +47,11 @@ namespace DatabaseUpgrader.Test
             AssertOptions(options, false, null, true, null);
         }
 
+        [Test]
+        public void Parse_ShouldParseRequiresInitialize()
+        {
+            var options = Options.Parse("--requiresInitialize", CreateConnectionStringArgument());
+            Assert.That(options.RequiresInitialize, Is.True);
+        }
     }
 }

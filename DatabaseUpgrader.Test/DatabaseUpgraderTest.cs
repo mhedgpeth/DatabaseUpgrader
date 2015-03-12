@@ -10,6 +10,9 @@ namespace DatabaseUpgrader.Test
         [TestCase("25.sql", 25)]
         [TestCase("something.sql", 0)]
         [TestCase("scripts\\1.sql", 1)]
+        [TestCase(@"..\scripts\33.sql", 33)]
+        [TestCase(@"../scripts/42.sql", 42)]
+        [TestCase(@"C:\temp\scripts\1.sql", 1)]
         [Test]
         public void DatabaseVersionFor_ShouldParse(string file, int expected)
         {

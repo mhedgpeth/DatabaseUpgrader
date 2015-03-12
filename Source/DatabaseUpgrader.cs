@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using log4net;
 using Microsoft.SqlServer.Management.Common;
 
@@ -23,6 +24,29 @@ namespace DatabaseUpgrader
                 ? Directory.GetFiles(scriptsPath, "*.sql")
                 : new string[0];
             Log.DebugFormat("Created for version {0} going to scripts path {1}", softwareVersion, scriptsPath);
+        }
+
+        public bool RequiresInitialize()
+        {
+            using (var connection = new SqlConnection(m_ConnectionString))
+            {
+                connection.Open();
+                using (SqlCommand query = connection.CreateCommand())
+                {
+                    query.CommandText =
+                        "SELECT count(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'dbo' AND  TABLE_NAME = 'Version'";
+                    using (SqlDataReader reader = query.ExecuteReader())
+                    {
+                        int count = 0;
+                        while (reader.Read())
+                        {
+                            count = reader.GetInt32(0);
+                        }
+                        Log.InfoFormat("Number of rows in information schema that have the versiont able in it: {0}", count);
+                        return count == 0;
+                    }
+                }
+            }
         }
 
         public bool Initialize()
@@ -176,7 +200,8 @@ namespace DatabaseUpgrader
         public static int DatabaseVersionFor(string file)
         {
             int numericPart = 0;
-            string fileName = file.Substring(file.IndexOf('\\') + 1);
+            
+            string fileName = Path.GetFileName(file);
             if (fileName.EndsWith(".sql"))
             {
                 string numericPartString = fileName.Substring(0, fileName.Length - 4);
@@ -185,6 +210,8 @@ namespace DatabaseUpgrader
             }
             return numericPart;
         }
+
+        
 
         private SchemaVersion RetrieveCurrentVersionFromDatabase(string connectionString)
         {
